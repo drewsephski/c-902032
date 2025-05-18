@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Search, Filter, Plus, Move } from 'lucide-react';
+import { Search, Filter, Plus, Move, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import TableView from './views/TableView';
@@ -7,6 +8,7 @@ import GridView from './views/GridView';
 import ListView from './views/ListView';
 import KanbanView from './views/KanbanView';
 import { cortexItems } from './cortex-data';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   Dialog, 
   DialogContent, 
@@ -14,6 +16,13 @@ import {
   DialogTitle, 
   DialogFooter 
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { 
   Select, 
   SelectContent, 
@@ -34,6 +43,7 @@ const CortexTable = ({ viewType = 'table', categoryId = 'private', cortexId = 'o
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [targetCortex, setTargetCortex] = useState<string>('');
+  const isMobile = useIsMobile();
   
   const getActiveCortexName = () => {
     const categories = [
@@ -140,11 +150,39 @@ const CortexTable = ({ viewType = 'table', categoryId = 'private', cortexId = 'o
     { id: 'private-2', name: 'Space' },
     { id: 'private-3', name: 'Cloud Computing' },
   ];
+  
+  // Mobile action menu
+  const MobileActionMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        {selectedItems.length > 0 && (
+          <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
+            <Move size={16} className="mr-2" />
+            Move ({selectedItems.length})
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem>
+          <Filter size={16} className="mr-2" />
+          Filter
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Plus size={16} className="mr-2" />
+          New Cortex
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-4 border-b border-border/50">
-        <div className="relative w-80">
+      <div className="flex items-center justify-between p-2 md:p-4 border-b border-border/50 flex-wrap gap-2">
+        <div className="relative w-full md:w-80">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
           <Input 
             placeholder="Search cortexes..." 
@@ -153,27 +191,34 @@ const CortexTable = ({ viewType = 'table', categoryId = 'private', cortexId = 'o
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
-          {selectedItems.length > 0 && (
-            <Button variant="outline" size="sm" onClick={() => setMoveDialogOpen(true)}>
-              <Move size={16} className="mr-2" />
-              Move ({selectedItems.length})
+        
+        {isMobile ? (
+          <div className="flex w-full justify-end">
+            <MobileActionMenu />
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            {selectedItems.length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => setMoveDialogOpen(true)}>
+                <Move size={16} className="mr-2" />
+                Move ({selectedItems.length})
+              </Button>
+            )}
+            <Button variant="outline" size="sm">
+              <Filter size={16} className="mr-2" />
+              Filter
             </Button>
-          )}
-          <Button variant="outline" size="sm">
-            <Filter size={16} className="mr-2" />
-            Filter
-          </Button>
-          <Button size="sm">
-            <Plus size={16} className="mr-2" />
-            New Cortex
-          </Button>
-        </div>
+            <Button size="sm">
+              <Plus size={16} className="mr-2" />
+              New Cortex
+            </Button>
+          </div>
+        )}
       </div>
       
       <div className="flex-1 overflow-auto">
         {filteredItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4 text-center">
             <p>No cortex items found for this section.</p>
           </div>
         ) : (
@@ -205,7 +250,7 @@ const CortexTable = ({ viewType = 'table', categoryId = 'private', cortexId = 'o
       </div>
 
       <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-w-[95%] mx-auto">
           <DialogHeader>
             <DialogTitle>Move to Cortex</DialogTitle>
           </DialogHeader>
@@ -223,11 +268,11 @@ const CortexTable = ({ viewType = 'table', categoryId = 'private', cortexId = 'o
               </SelectContent>
             </Select>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMoveDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setMoveDialogOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={handleMoveItems} disabled={!targetCortex}>
+            <Button onClick={handleMoveItems} disabled={!targetCortex} className="w-full sm:w-auto">
               Move Items
             </Button>
           </DialogFooter>
